@@ -38,6 +38,10 @@ export class GameScene extends Phaser.Scene {
     this.player = new Player(this, TILE_SIZE * 2, GAME_HEIGHT - TILE_SIZE * 3);
     this.physics.add.collider(this.player, this.groundLayer);
 
+    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    this.cameras.main.setRoundPixels(true);
+
     this.inputHandler = new InputHandler(this);
 
     this.fpsText = this.add
