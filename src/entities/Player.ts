@@ -9,6 +9,7 @@ export class Player extends Phaser.GameObjects.Rectangle {
 
   private coyoteTimer = 0;
   private jumpBufferTimer = 0;
+  private jumpsUsed = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 32, 48, 0x4ade80);
@@ -22,6 +23,10 @@ export class Player extends Phaser.GameObjects.Rectangle {
 
   update(delta: number, input: InputHandler): void {
     const grounded = this.body.blocked.down || this.body.touching.down;
+
+    if (grounded) {
+      this.jumpsUsed = 0;
+    }
 
     this.coyoteTimer = grounded
       ? PHYSICS.coyoteTimeMs
@@ -39,8 +44,12 @@ export class Player extends Phaser.GameObjects.Rectangle {
       this.body.setAccelerationX(0);
     }
 
-    if (this.jumpBufferTimer > 0 && this.coyoteTimer > 0) {
+    const canJump =
+      this.jumpsUsed === 0 ? this.coyoteTimer > 0 : this.jumpsUsed < PHYSICS.maxJumps;
+
+    if (this.jumpBufferTimer > 0 && canJump) {
       this.body.setVelocityY(-PHYSICS.jumpVelocity);
+      this.jumpsUsed += 1;
       this.jumpBufferTimer = 0;
       this.coyoteTimer = 0;
     }

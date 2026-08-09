@@ -11,6 +11,7 @@ export const PHYSICS = {
   jumpVelocity: 620,
   coyoteTimeMs: 100,
   jumpBufferMs: 120,
+  maxJumps: 2,
   // Fall faster than you rise, so a fixed-velocity jump doesn't feel
   // floaty by hanging symmetrically at the top of its arc.
   fallGravityMultiplier: 1.6,
