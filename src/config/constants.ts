@@ -1,7 +1,7 @@
 export const TILE_SIZE = 32;
 
 export const GAME_WIDTH = 960;
-export const GAME_HEIGHT = 540;
+export const GAME_HEIGHT = 544; // 17 tiles at TILE_SIZE=32, keeps the level grid pixel-aligned
 
 export const PHYSICS = {
   gravityY: 1700,

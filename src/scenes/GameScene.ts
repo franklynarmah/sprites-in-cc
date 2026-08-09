@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, GAME_WIDTH } from "../config/constants";
+import { GAME_HEIGHT, TILE_SIZE } from "../config/constants";
+import { LEVEL_DATA } from "../config/level";
 import { Player } from "../entities/Player";
 import { InputHandler } from "../systems/InputHandler";
 
@@ -7,6 +8,9 @@ export class GameScene extends Phaser.Scene {
   private player!: Player;
   private inputHandler!: InputHandler;
   private fpsText!: Phaser.GameObjects.Text;
+  private groundLayer!: Phaser.Tilemaps.TilemapLayer;
+  private debugOn = false;
+  private tileDebugGraphic?: Phaser.GameObjects.Graphics;
 
   constructor() {
     super("Game");
@@ -15,27 +19,24 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor("#2b2f77");
 
-    const ground = this.add.rectangle(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT - 20,
-      GAME_WIDTH,
-      40,
-      0x3a3f8f,
-    );
-    this.physics.add.existing(ground, true);
+    const map = this.make.tilemap({
+      data: LEVEL_DATA,
+      tileWidth: TILE_SIZE,
+      tileHeight: TILE_SIZE,
+    });
+    const tileset = map.addTilesetImage(
+      "tile-solid",
+      "tile-solid",
+      TILE_SIZE,
+      TILE_SIZE,
+    )!;
+    this.groundLayer = map.createLayer(0, tileset, 0, 0)!;
+    this.groundLayer.setCollision(0);
 
-    const ledge = this.add.rectangle(
-      GAME_WIDTH - 160,
-      GAME_HEIGHT - 140,
-      200,
-      24,
-      0x3a3f8f,
-    );
-    this.physics.add.existing(ledge, true);
+    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-    this.player = new Player(this, 120, GAME_HEIGHT - 100);
-    this.physics.add.collider(this.player, ground);
-    this.physics.add.collider(this.player, ledge);
+    this.player = new Player(this, TILE_SIZE * 2, GAME_HEIGHT - TILE_SIZE * 3);
+    this.physics.add.collider(this.player, this.groundLayer);
 
     this.inputHandler = new InputHandler(this);
 
@@ -57,12 +58,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   private toggleDebug(): void {
+    this.debugOn = !this.debugOn;
     const world = this.physics.world;
-    if (world.drawDebug) {
+
+    if (this.debugOn) {
+      world.createDebugGraphic();
+      this.tileDebugGraphic = this.add.graphics();
+      this.groundLayer.renderDebug(this.tileDebugGraphic, {
+        tileColor: null,
+        collidingTileColor: new Phaser.Display.Color(255, 61, 61, 120),
+        faceColor: new Phaser.Display.Color(40, 255, 40, 200),
+      });
+    } else {
       world.drawDebug = false;
       world.debugGraphic?.clear();
-    } else {
-      world.createDebugGraphic();
+      this.tileDebugGraphic?.destroy();
+      this.tileDebugGraphic = undefined;
     }
   }
 }

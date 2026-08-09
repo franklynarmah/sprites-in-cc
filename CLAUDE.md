@@ -20,12 +20,18 @@ main.ts         Game instance + scene list only, no gameplay logic
 
 ## Constants (src/config/constants.ts)
 - Tile size: 32px
-- Game canvas: 960x540, Scale.FIT + CENTER_BOTH
-- Gravity: 1200
+- Game canvas: 960x544 (17 tiles tall, pixel-aligned to the grid), Scale.FIT + CENTER_BOTH
+- Gravity (rise): 1700, fall gravity multiplier: 1.6x on top of that while falling
 - Move speed: 220, acceleration: 1800, drag: 1600
-- Jump velocity: 520
+- Jump velocity: 620, fixed height regardless of button hold duration (no variable jump)
+- Max jumps: 2 (double jump), budget resets on landing
 - Coyote time: 100ms, jump buffer: 120ms
 - These will keep changing as movement gets tuned — update this file whenever they do, don't let code and doc drift apart.
+
+## Level Data (src/config/level.ts)
+- Raw 2D array tilemap built via Phaser's `data` config path (`Parse2DArray`), NOT the Tiled-JSON loader — different index convention than Tiled files: **-1 = empty, 0 = solid** (0 indexes the tileset's first frame directly). If real Tiled-exported JSON is loaded later, switch to `tilemap.json` loading + `map.createLayer` from cache, where 0 means empty instead — don't mix the two conventions.
+- Placeholder tileset is a single generated 32x32 texture (`tile-solid`) created at runtime in `PreloadScene`; swap for a real tileset image at step 9.
+- Collision: `groundLayer.setCollision(0)`, one collider between player and the tile layer.
 
 ## Code Style
 - One class per entity/scene file
