@@ -44,5 +44,13 @@ export class Player extends Phaser.GameObjects.Rectangle {
       this.jumpBufferTimer = 0;
       this.coyoteTimer = 0;
     }
+
+    if (this.body.velocity.y > 0) {
+      this.body.setGravityY(PHYSICS.gravityY * (PHYSICS.fallGravityMultiplier - 1));
+    } else if (this.body.velocity.y < 0 && !input.jumpHeld) {
+      this.body.setGravityY(PHYSICS.gravityY * (PHYSICS.lowJumpGravityMultiplier - 1));
+    } else {
+      this.body.setGravityY(0);
+    }
   }
 }

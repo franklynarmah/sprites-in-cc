@@ -11,4 +11,9 @@ export const PHYSICS = {
   jumpVelocity: 520,
   coyoteTimeMs: 100,
   jumpBufferMs: 120,
+  // Asymmetric gravity: fall faster than you rise, and cut the jump short
+  // when the button is released early. Fixes the "floaty" feel that plain
+  // symmetric gravity gives a fixed-velocity jump.
+  fallGravityMultiplier: 1.6,
+  lowJumpGravityMultiplier: 2.4,
 };

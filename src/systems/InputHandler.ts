@@ -26,6 +26,10 @@ export class InputHandler {
     return this.cursors.right.isDown || this.keyD.isDown;
   }
 
+  get jumpHeld(): boolean {
+    return this.cursors.up.isDown || this.keyW.isDown || this.keySpace.isDown;
+  }
+
   /** Call once per frame, before reading jumpJustPressed. */
   update(): void {
     this.jumpJustPressed =
