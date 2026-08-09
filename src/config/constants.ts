@@ -31,4 +31,10 @@ export const ENEMY = {
   patrolSpeed: 60,
   idleMs: 400,
   hurtMs: 220,
+  // Total width of the patrol leash, centered on the enemy's spawn point (in tiles).
+  patrolRangeTiles: 4,
+  // While the player is inside the patrol range (and roughly the same height),
+  // the enemy chases instead of turning back at the leash boundary.
+  chaseSpeed: 110,
+  chaseVerticalToleranceTiles: 1.5,
 };

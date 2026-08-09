@@ -64,7 +64,7 @@ export class GameScene extends Phaser.Scene {
     this.player.update(delta, this.inputHandler);
 
     for (const enemy of this.enemies) {
-      enemy.update(delta);
+      enemy.update(delta, this.player);
     }
     this.enemies = this.enemies.filter((enemy) => {
       if (enemy.isDefeated) {

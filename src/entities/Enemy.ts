@@ -1,13 +1,15 @@
 import Phaser from "phaser";
-import { ENEMY } from "../config/constants";
+import { ENEMY, TILE_SIZE } from "../config/constants";
+import { Player } from "./Player";
 
-type EnemyState = "idle" | "patrol" | "hurt";
+type EnemyAiState = "idle" | "patrol" | "chase" | "hurt";
 
 export class Enemy extends Phaser.GameObjects.Rectangle {
   declare body: Phaser.Physics.Arcade.Body;
 
   private readonly groundLayer: Phaser.Tilemaps.TilemapLayer;
-  private aiState: EnemyState = "idle";
+  private readonly spawnX: number;
+  private aiState: EnemyAiState = "idle";
   private idleTimer = ENEMY.idleMs;
   private hurtTimer = 0;
   private direction: 1 | -1 = 1;
@@ -15,6 +17,7 @@ export class Enemy extends Phaser.GameObjects.Rectangle {
   constructor(scene: Phaser.Scene, x: number, y: number, groundLayer: Phaser.Tilemaps.TilemapLayer) {
     super(scene, x, y, ENEMY.width, ENEMY.height, 0xe05252);
     this.groundLayer = groundLayer;
+    this.spawnX = x;
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.body.setCollideWorldBounds(true);
@@ -24,7 +27,7 @@ export class Enemy extends Phaser.GameObjects.Rectangle {
     return this.aiState === "hurt" && this.hurtTimer <= 0;
   }
 
-  update(delta: number): void {
+  update(delta: number, player: Player): void {
     if (this.aiState === "idle") {
       this.idleTimer -= delta;
       if (this.idleTimer <= 0) {
@@ -38,15 +41,37 @@ export class Enemy extends Phaser.GameObjects.Rectangle {
       return;
     }
 
-    this.body.setVelocityX(ENEMY.patrolSpeed * this.direction);
+    const halfRange = (ENEMY.patrolRangeTiles / 2) * TILE_SIZE;
+    const leftBound = this.spawnX - halfRange;
+    const rightBound = this.spawnX + halfRange;
 
-    const hitWall = this.direction > 0 ? this.body.blocked.right : this.body.blocked.left;
+    const withinVerticalRange =
+      Math.abs(player.y - this.y) < ENEMY.chaseVerticalToleranceTiles * TILE_SIZE;
+    const withinPatrolRange = player.x >= leftBound && player.x <= rightBound;
+    const playerDetected = withinVerticalRange && withinPatrolRange;
+
+    this.aiState = playerDetected ? "chase" : "patrol";
+    if (playerDetected) {
+      this.direction = player.x >= this.x ? 1 : -1;
+    }
+
     const footAheadX = this.x + this.direction * (this.width / 2 + 2);
     const footY = this.y + this.height / 2 + 4;
     const tileAhead = this.groundLayer.getTileAtWorldXY(footAheadX, footY);
+    const hitWall = this.direction > 0 ? this.body.blocked.right : this.body.blocked.left;
+    const blockedAhead = hitWall || !tileAhead;
 
-    if (hitWall || !tileAhead) {
-      this.direction = this.direction > 0 ? -1 : 1;
+    if (this.aiState === "chase") {
+      // Ignore the leash while chasing, but never walk off a real ledge or into a wall.
+      this.body.setVelocityX(blockedAhead ? 0 : ENEMY.chaseSpeed * this.direction);
+    } else {
+      const reachedLeashBound =
+        (this.direction > 0 && this.x >= rightBound) ||
+        (this.direction < 0 && this.x <= leftBound);
+      if (blockedAhead || reachedLeashBound) {
+        this.direction = this.direction > 0 ? -1 : 1;
+      }
+      this.body.setVelocityX(ENEMY.patrolSpeed * this.direction);
     }
   }
 
