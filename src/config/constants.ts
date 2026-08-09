@@ -16,3 +16,19 @@ export const PHYSICS = {
   // floaty by hanging symmetrically at the top of its arc.
   fallGravityMultiplier: 1.6,
 };
+
+export const PLAYER = {
+  maxHp: 3,
+  invulnerabilityMs: 1000,
+  knockbackX: 220,
+  knockbackY: 260,
+  stompBounceVelocity: 400,
+};
+
+export const ENEMY = {
+  width: 28,
+  height: 28,
+  patrolSpeed: 60,
+  idleMs: 400,
+  hurtMs: 220,
+};

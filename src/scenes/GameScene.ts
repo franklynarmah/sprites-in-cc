@@ -1,7 +1,8 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, TILE_SIZE } from "../config/constants";
+import { GAME_HEIGHT, PLAYER, TILE_SIZE } from "../config/constants";
 import { LEVEL_DATA } from "../config/level";
 import { Player } from "../entities/Player";
+import { Enemy } from "../entities/Enemy";
 import { InputHandler } from "../systems/InputHandler";
 
 export class GameScene extends Phaser.Scene {
@@ -9,6 +10,7 @@ export class GameScene extends Phaser.Scene {
   private inputHandler!: InputHandler;
   private fpsText!: Phaser.GameObjects.Text;
   private groundLayer!: Phaser.Tilemaps.TilemapLayer;
+  private enemies: Enemy[] = [];
   private debugOn = false;
   private tileDebugGraphic?: Phaser.GameObjects.Graphics;
 
@@ -38,6 +40,8 @@ export class GameScene extends Phaser.Scene {
     this.player = new Player(this, TILE_SIZE * 2, GAME_HEIGHT - TILE_SIZE * 3);
     this.physics.add.collider(this.player, this.groundLayer);
 
+    this.spawnEnemies();
+
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setRoundPixels(true);
@@ -58,7 +62,55 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     this.inputHandler.update();
     this.player.update(delta, this.inputHandler);
-    this.fpsText.setText(`FPS: ${Math.round(this.game.loop.actualFps)}  (P: toggle hitboxes)`);
+
+    for (const enemy of this.enemies) {
+      enemy.update(delta);
+    }
+    this.enemies = this.enemies.filter((enemy) => {
+      if (enemy.isDefeated) {
+        enemy.destroy();
+        return false;
+      }
+      return true;
+    });
+
+    this.fpsText.setText(
+      `FPS: ${Math.round(this.game.loop.actualFps)}  HP: ${this.player.health.current}/${this.player.health.max}  (P: toggle hitboxes)`,
+    );
+  }
+
+  private spawnEnemies(): void {
+    const spawnPoints = [
+      { x: TILE_SIZE * 10, y: GAME_HEIGHT - TILE_SIZE * 3 },
+      { x: TILE_SIZE * 26, y: GAME_HEIGHT - TILE_SIZE * 8 },
+    ];
+
+    for (const point of spawnPoints) {
+      const enemy = new Enemy(this, point.x, point.y, this.groundLayer);
+      this.physics.add.collider(enemy, this.groundLayer);
+      this.physics.add.overlap(this.player, enemy, (_playerObj, enemyObj) =>
+        this.handlePlayerEnemyOverlap(enemyObj as Enemy),
+      );
+      this.enemies.push(enemy);
+    }
+  }
+
+  private handlePlayerEnemyOverlap(enemy: Enemy): void {
+    if (enemy.isDefeated) {
+      return;
+    }
+
+    const playerBottom = this.player.body.y + this.player.body.height;
+    const enemyTop = enemy.body.y;
+    const isStomp = this.player.body.velocity.y > 0 && playerBottom - enemyTop < 10;
+
+    if (isStomp) {
+      enemy.hit();
+      this.player.body.setVelocityY(-PLAYER.stompBounceVelocity);
+    } else {
+      const knockDir = this.player.x < enemy.x ? -1 : 1;
+      this.player.takeDamage(1, knockDir);
+    }
   }
 
   private toggleDebug(): void {

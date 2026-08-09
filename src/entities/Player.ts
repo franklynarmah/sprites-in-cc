@@ -1,15 +1,20 @@
 import Phaser from "phaser";
-import { PHYSICS } from "../config/constants";
+import { PHYSICS, PLAYER } from "../config/constants";
 import { InputHandler } from "../systems/InputHandler";
+import { Health } from "../systems/Health";
 
 const MAX_FALL_SPEED = 1000;
+const FLASH_INTERVAL_MS = 80;
 
 export class Player extends Phaser.GameObjects.Rectangle {
   declare body: Phaser.Physics.Arcade.Body;
 
+  readonly health = new Health(PLAYER.maxHp);
+
   private coyoteTimer = 0;
   private jumpBufferTimer = 0;
   private jumpsUsed = 0;
+  private flashElapsedMs = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 32, 48, 0x4ade80);
@@ -59,5 +64,28 @@ export class Player extends Phaser.GameObjects.Rectangle {
         ? PHYSICS.gravityY * (PHYSICS.fallGravityMultiplier - 1)
         : 0,
     );
+
+    this.health.update(delta);
+    this.updateInvulnerabilityFlash(delta);
+  }
+
+  /** Returns true if the hit actually landed (false while invulnerable). */
+  takeDamage(amount: number, knockbackDirX: -1 | 1): boolean {
+    const applied = this.health.damage(amount, PLAYER.invulnerabilityMs);
+    if (applied) {
+      this.body.setVelocity(knockbackDirX * PLAYER.knockbackX, -PLAYER.knockbackY);
+    }
+    return applied;
+  }
+
+  private updateInvulnerabilityFlash(delta: number): void {
+    if (!this.health.isInvulnerable) {
+      this.setAlpha(1);
+      this.flashElapsedMs = 0;
+      return;
+    }
+    this.flashElapsedMs += delta;
+    const blinkOn = Math.floor(this.flashElapsedMs / FLASH_INTERVAL_MS) % 2 === 0;
+    this.setAlpha(blinkOn ? 1 : 0.3);
   }
 }

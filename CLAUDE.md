@@ -28,6 +28,13 @@ main.ts         Game instance + scene list only, no gameplay logic
 - Coyote time: 100ms, jump buffer: 120ms
 - These will keep changing as movement gets tuned — update this file whenever they do, don't let code and doc drift apart.
 
+## Enemies & Health (src/entities/Enemy.ts, src/systems/Health.ts)
+- Enemy state machine: idle (400ms on spawn) -> patrol -> hurt (220ms, on being stomped, then destroyed). Note: the field is named `aiState`, not `state` — `state` collides with a built-in property on Phaser.GameObjects.GameObject.
+- Patrol AI turns around on hitting a wall (`body.blocked`) or reaching a platform edge (probes one tile ahead with `groundLayer.getTileAtWorldXY`) — never walks off a ledge.
+- Player/enemy interaction is overlap-only (not a solid collider): landing on top with downward velocity stomps the enemy (defeats it, small bounce); side contact damages the player (`Player.takeDamage`) with knockback + 1s invulnerability (flashing alpha).
+- `Health` is a plain composed class on `Player` (`player.health`), not a subclass — matches the composition-over-inheritance rule below. No death/respawn handling yet; that's step 7 (win/lose, checkpoints).
+- Enemy constants: patrol speed 60, idle 400ms, hurt 220ms. Player constants: maxHp 3, invulnerability 1000ms, knockback (220, 260), stomp bounce velocity 400.
+
 ## Level Data (src/config/level.ts)
 - Raw 2D array tilemap built via Phaser's `data` config path (`Parse2DArray`), NOT the Tiled-JSON loader — different index convention than Tiled files: **-1 = empty, 0 = solid** (0 indexes the tileset's first frame directly). If real Tiled-exported JSON is loaded later, switch to `tilemap.json` loading + `map.createLayer` from cache, where 0 means empty instead — don't mix the two conventions.
 - Placeholder tileset is a single generated 32x32 texture (`tile-solid`) created at runtime in `PreloadScene`; swap for a real tileset image at step 9.
