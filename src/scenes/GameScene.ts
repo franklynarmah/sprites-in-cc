@@ -1,9 +1,17 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, PLAYER, TILE_SIZE } from "../config/constants";
-import { LEVEL_DATA } from "../config/level";
+import { GROUND_ROW_TOP, LEVEL_DATA, PIT_DEATH_Y } from "../config/level";
 import { Player } from "../entities/Player";
 import { Enemy } from "../entities/Enemy";
+import { Checkpoint } from "../entities/Checkpoint";
+import { Goal } from "../entities/Goal";
 import { InputHandler } from "../systems/InputHandler";
+import { SaveState } from "../systems/SaveState";
+
+const GROUND_SURFACE_Y = GROUND_ROW_TOP * TILE_SIZE;
+const INITIAL_SPAWN = { x: TILE_SIZE * 2, y: GAME_HEIGHT - TILE_SIZE * 3 };
+const CHECKPOINT_COLS = [22, 50];
+const GOAL_COL = 57;
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -11,6 +19,8 @@ export class GameScene extends Phaser.Scene {
   private fpsText!: Phaser.GameObjects.Text;
   private groundLayer!: Phaser.Tilemaps.TilemapLayer;
   private enemies: Enemy[] = [];
+  private checkpoints: Checkpoint[] = [];
+  private gameEnding = false;
   private debugOn = false;
   private tileDebugGraphic?: Phaser.GameObjects.Graphics;
 
@@ -19,6 +29,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Phaser reuses this same Scene instance across restarts (scene.start
+    // doesn't construct a new GameScene), so class field initializers only
+    // ever run once — all per-run state must be reset here explicitly.
+    this.gameEnding = false;
+    this.enemies = [];
+    this.checkpoints = [];
+    this.debugOn = false;
+    this.tileDebugGraphic = undefined;
+
     this.cameras.main.setBackgroundColor("#2b2f77");
 
     const map = this.make.tilemap({
@@ -37,10 +56,13 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-    this.player = new Player(this, TILE_SIZE * 2, GAME_HEIGHT - TILE_SIZE * 3);
+    const spawn = SaveState.getCheckpoint() ?? INITIAL_SPAWN;
+    this.player = new Player(this, spawn.x, spawn.y);
     this.physics.add.collider(this.player, this.groundLayer);
 
     this.spawnEnemies();
+    this.spawnCheckpoints();
+    this.spawnGoal();
 
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -60,6 +82,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
+    if (this.gameEnding) {
+      return;
+    }
+
     this.inputHandler.update();
     this.player.update(delta, this.inputHandler);
 
@@ -73,6 +99,15 @@ export class GameScene extends Phaser.Scene {
       }
       return true;
     });
+
+    if (this.player.y > PIT_DEATH_Y) {
+      this.respawnFromPit();
+    }
+
+    if (this.player.health.isDead) {
+      this.endGame("lose");
+      return;
+    }
 
     this.fpsText.setText(
       `FPS: ${Math.round(this.game.loop.actualFps)}  HP: ${this.player.health.current}/${this.player.health.max}  (P: toggle hitboxes)`,
@@ -93,6 +128,45 @@ export class GameScene extends Phaser.Scene {
       );
       this.enemies.push(enemy);
     }
+  }
+
+  private spawnCheckpoints(): void {
+    const activeCheckpoint = SaveState.getCheckpoint();
+
+    for (const col of CHECKPOINT_COLS) {
+      const x = col * TILE_SIZE;
+      const checkpoint = new Checkpoint(this, x, GROUND_SURFACE_Y - 20);
+      if (activeCheckpoint?.x === x) {
+        checkpoint.activate();
+      }
+      this.physics.add.overlap(this.player, checkpoint, () => {
+        if (!checkpoint.isActivated) {
+          checkpoint.activate();
+          SaveState.setCheckpoint(x, INITIAL_SPAWN.y);
+        }
+      });
+      this.checkpoints.push(checkpoint);
+    }
+  }
+
+  private spawnGoal(): void {
+    const x = GOAL_COL * TILE_SIZE;
+    const goal = new Goal(this, x, GROUND_SURFACE_Y - 28);
+    this.physics.add.overlap(this.player, goal, () => this.endGame("win"));
+  }
+
+  private respawnFromPit(): void {
+    const spawn = SaveState.getCheckpoint() ?? INITIAL_SPAWN;
+    this.player.body.reset(spawn.x, spawn.y);
+    this.player.health.grantInvulnerability(PLAYER.invulnerabilityMs);
+  }
+
+  private endGame(outcome: "win" | "lose"): void {
+    if (this.gameEnding) {
+      return;
+    }
+    this.gameEnding = true;
+    this.scene.start("GameOver", { outcome });
   }
 
   private handlePlayerEnemyOverlap(enemy: Enemy): void {

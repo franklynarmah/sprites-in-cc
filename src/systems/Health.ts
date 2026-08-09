@@ -39,4 +39,13 @@ export class Health {
     this.invulnerableMs = invulnerabilityMs;
     return true;
   }
+
+  fullRestore(): void {
+    this.hp = this.maxHp;
+    this.invulnerableMs = 0;
+  }
+
+  grantInvulnerability(ms: number): void {
+    this.invulnerableMs = Math.max(this.invulnerableMs, ms);
+  }
 }

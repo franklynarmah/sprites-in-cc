@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PHYSICS } from "./config/constants";
 import { BootScene } from "./scenes/BootScene";
 import { PreloadScene } from "./scenes/PreloadScene";
 import { GameScene } from "./scenes/GameScene";
+import { GameOverScene } from "./scenes/GameOverScene";
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -21,5 +22,5 @@ new Phaser.Game({
       debug: false,
     },
   },
-  scene: [BootScene, PreloadScene, GameScene],
+  scene: [BootScene, PreloadScene, GameScene, GameOverScene],
 });

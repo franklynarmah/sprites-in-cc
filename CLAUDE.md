@@ -7,8 +7,8 @@
 ## Folder Structure
 ```
 /src
-  /scenes       BootScene, PreloadScene, GameScene, ... one class per file
-  /entities     Player, Enemy, Collectible — classes extending Phaser.GameObjects
+  /scenes       BootScene, PreloadScene, GameScene, GameOverScene, ... one class per file
+  /entities     Player, Enemy, Checkpoint, Goal, Collectible — classes extending Phaser.GameObjects
   /systems      InputHandler, CameraController, SaveState, shared helpers
   /config       constants.ts — all tunable numbers live here, nowhere else
   /assets
@@ -33,13 +33,21 @@ main.ts         Game instance + scene list only, no gameplay logic
 - Patrol is a fixed leash centered on the enemy's spawn x (`patrolRangeTiles`, total width, default 4 tiles) — not edge-to-edge wandering. It still turns around early on hitting a wall or a real platform edge (probes one tile ahead with `groundLayer.getTileAtWorldXY`), so the leash can never walk it off a ledge.
 - Chase: if the player is horizontally within the leash range AND within `chaseVerticalToleranceTiles` of the enemy's height, the enemy ignores the leash boundary and moves directly toward the player instead of turning back — this is what makes it "attack" rather than patrol away. Wall/ledge safety checks still apply during chase (it halts rather than reversing). Drops back to patrol once the player leaves the range.
 - Player/enemy interaction is overlap-only (not a solid collider): landing on top with downward velocity stomps the enemy (defeats it, small bounce); side contact damages the player (`Player.takeDamage`) with knockback + 1s invulnerability (flashing alpha).
-- `Health` is a plain composed class on `Player` (`player.health`), not a subclass — matches the composition-over-inheritance rule below. No death/respawn handling yet; that's step 7 (win/lose, checkpoints).
+- `Health` is a plain composed class on `Player` (`player.health`), not a subclass — matches the composition-over-inheritance rule below.
 - Enemy constants: patrol speed 60, chase speed 110, patrol range 4 tiles, idle 400ms, hurt 220ms. Player constants: maxHp 3, invulnerability 1000ms, knockback (220, 260), stomp bounce velocity 400.
+
+## Win/Lose, Checkpoints, Respawn (src/scenes/GameOverScene.ts, src/systems/SaveState.ts, src/entities/Checkpoint.ts, src/entities/Goal.ts)
+- **Pit fall** (`player.y > PIT_DEATH_Y` from `config/level.ts`): instant, silent respawn at the last checkpoint (or the initial spawn) — no scene transition, no HP cost, just a brief invulnerability grace period so a nearby enemy can't immediately re-kill on landing.
+- **HP reaching 0** (from enemy combat only, not pit falls): transitions to `GameOverScene` with `{ outcome: 'lose' }` — a deliberate pause ("YOU DIED"), unlike the seamless pit respawn. Retry respawns at the last checkpoint with HP fully restored.
+- **Touching the `Goal`** entity: transitions to `GameOverScene` with `{ outcome: 'win' }` ("LEVEL COMPLETE"). Retrying resets `SaveState` (clears the checkpoint) and returns to the very start — there's only one level so far.
+- **Checkpoints**: overlap-only static markers, change color (yellow -> green) once touched, and write their respawn position into `SaveState` (a simple in-memory singleton, not persisted to localStorage yet). On scene (re)create, checkpoints matching the current `SaveState` checkpoint re-activate visually so state stays truthful after a restart.
+- **Important Phaser gotcha**: `scene.start(...)` reuses the same `GameScene` instance — it does NOT construct a new one — so class field initializers (`private enemies: Enemy[] = []`, etc.) only run once, ever. `create()` must explicitly reset all per-run mutable state (`enemies`, `checkpoints`, `gameEnding`, debug graphics) at the top, every time, or stale objects from the previous run (referencing destroyed tilemap layers) keep getting `update()`'d and throw. This bit us once already — don't reintroduce a new mutable field without resetting it in `create()`.
 
 ## Level Data (src/config/level.ts)
 - Raw 2D array tilemap built via Phaser's `data` config path (`Parse2DArray`), NOT the Tiled-JSON loader — different index convention than Tiled files: **-1 = empty, 0 = solid** (0 indexes the tileset's first frame directly). If real Tiled-exported JSON is loaded later, switch to `tilemap.json` loading + `map.createLayer` from cache, where 0 means empty instead — don't mix the two conventions.
 - Placeholder tileset is a single generated 32x32 texture (`tile-solid`) created at runtime in `PreloadScene`; swap for a real tileset image at step 9.
 - Collision: `groundLayer.setCollision(0)`, one collider between player and the tile layer.
+- `GROUND_ROW_TOP` and `PIT_DEATH_Y` are exported for use by respawn/death logic elsewhere — don't recompute the ground row inline.
 
 ## Code Style
 - One class per entity/scene file
