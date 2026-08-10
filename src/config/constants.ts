@@ -38,3 +38,13 @@ export const ENEMY = {
   chaseSpeed: 110,
   chaseVerticalToleranceTiles: 1.5,
 };
+
+export const UI = {
+  hudMargin: 10,
+  heartSize: 16,
+  heartSpacing: 6,
+  heartFilledColor: 0xe8453c,
+  heartEmptyColor: 0x3a3a3a,
+  overlayColor: 0x000000,
+  overlayAlpha: 0.6,
+};

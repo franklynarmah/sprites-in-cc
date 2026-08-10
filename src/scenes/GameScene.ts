@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, PLAYER, TILE_SIZE } from "../config/constants";
+import { GAME_HEIGHT, PLAYER, TILE_SIZE, UI } from "../config/constants";
 import { GROUND_ROW_TOP, LEVEL_DATA, PIT_DEATH_Y } from "../config/level";
 import { Player } from "../entities/Player";
 import { Enemy } from "../entities/Enemy";
@@ -7,6 +7,7 @@ import { Checkpoint } from "../entities/Checkpoint";
 import { Goal } from "../entities/Goal";
 import { InputHandler } from "../systems/InputHandler";
 import { SaveState } from "../systems/SaveState";
+import { HUD } from "../systems/HUD";
 
 const GROUND_SURFACE_Y = GROUND_ROW_TOP * TILE_SIZE;
 const INITIAL_SPAWN = { x: TILE_SIZE * 2, y: GAME_HEIGHT - TILE_SIZE * 3 };
@@ -16,6 +17,7 @@ const GOAL_COL = 57;
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private inputHandler!: InputHandler;
+  private hud!: HUD;
   private fpsText!: Phaser.GameObjects.Text;
   private groundLayer!: Phaser.Tilemaps.TilemapLayer;
   private enemies: Enemy[] = [];
@@ -70,8 +72,11 @@ export class GameScene extends Phaser.Scene {
 
     this.inputHandler = new InputHandler(this);
 
+    this.hud = new HUD(this, UI.hudMargin, UI.hudMargin, this.player.health.max);
+    this.hud.setHealth(this.player.health.current);
+
     this.fpsText = this.add
-      .text(8, 8, "", {
+      .text(UI.hudMargin, UI.hudMargin + UI.heartSize + 6, "", {
         fontFamily: "monospace",
         fontSize: "14px",
         color: "#ffffff",
@@ -79,6 +84,7 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0);
 
     this.input.keyboard!.on("keydown-P", () => this.toggleDebug());
+    this.input.keyboard!.on("keydown-ESC", () => this.pauseGame());
   }
 
   update(_time: number, delta: number): void {
@@ -109,9 +115,18 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.hud.setHealth(this.player.health.current);
     this.fpsText.setText(
-      `FPS: ${Math.round(this.game.loop.actualFps)}  HP: ${this.player.health.current}/${this.player.health.max}  (P: toggle hitboxes)`,
+      `FPS: ${Math.round(this.game.loop.actualFps)}  (P: hitboxes, ESC: pause)`,
     );
+  }
+
+  private pauseGame(): void {
+    if (this.scene.isPaused()) {
+      return;
+    }
+    this.scene.pause();
+    this.scene.launch("Pause");
   }
 
   private spawnEnemies(): void {

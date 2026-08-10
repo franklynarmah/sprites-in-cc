@@ -7,7 +7,7 @@
 ## Folder Structure
 ```
 /src
-  /scenes       BootScene, PreloadScene, GameScene, GameOverScene, ... one class per file
+  /scenes       BootScene, PreloadScene, GameScene, GameOverScene, PauseScene, ... one class per file
   /entities     Player, Enemy, Checkpoint, Goal, Collectible — classes extending Phaser.GameObjects
   /systems      InputHandler, CameraController, SaveState, shared helpers
   /config       constants.ts — all tunable numbers live here, nowhere else
@@ -42,6 +42,13 @@ main.ts         Game instance + scene list only, no gameplay logic
 - **Touching the `Goal`** entity: transitions to `GameOverScene` with `{ outcome: 'win' }` ("LEVEL COMPLETE"). Retrying resets `SaveState` (clears the checkpoint) and returns to the very start — there's only one level so far.
 - **Checkpoints**: overlap-only static markers, change color (yellow -> green) once touched, and write their respawn position into `SaveState` (a simple in-memory singleton, not persisted to localStorage yet). On scene (re)create, checkpoints matching the current `SaveState` checkpoint re-activate visually so state stays truthful after a restart.
 - **Important Phaser gotcha**: `scene.start(...)` reuses the same `GameScene` instance — it does NOT construct a new one — so class field initializers (`private enemies: Enemy[] = []`, etc.) only run once, ever. `create()` must explicitly reset all per-run mutable state (`enemies`, `checkpoints`, `gameEnding`, debug graphics) at the top, every time, or stale objects from the previous run (referencing destroyed tilemap layers) keep getting `update()`'d and throw. This bit us once already — don't reintroduce a new mutable field without resetting it in `create()`.
+
+## UI: HUD & Pause (src/systems/HUD.ts, src/scenes/PauseScene.ts)
+- `HUD` is a plain composed class (like `Health`) owned by `GameScene`, not a scene of its own — it draws one placeholder heart Rectangle per max-HP point (`UI.heartFilledColor`/`heartEmptyColor`), scroll-factor 0. `setHealth(current)` just recolors existing hearts; real heart-icon sprites swap in at step 9 without touching the calling code.
+- The debug FPS text is now separate from the real HUD (it used to double as the HP readout) — it sits just below the hearts and stays a debug/dev aid, not player-facing UI.
+- Pause is a **separate scene** (`PauseScene`, key `"Pause"`), the standard Phaser pattern for overlays: `ESC` in `GameScene` calls `this.scene.pause()` (freezes update/physics for Game, but it keeps rendering behind the overlay) + `this.scene.launch("Pause")`. `PauseScene` draws a dim overlay + options and itself calls `this.scene.resume("Game")` / `this.scene.stop()` to unpause, or `this.scene.start("Game")` to restart from the last checkpoint (reuses the exact same checkpoint-or-initial-spawn logic as a normal death retry).
+- Guard against double-pausing with `this.scene.isPaused()` (a live Phaser check), not a manually-tracked boolean field — avoids the class-field-reset trap described below since it's never stale across restarts.
+- `UI` constants (`config/constants.ts`): hud margin, heart size/spacing/colors, pause overlay color/alpha.
 
 ## Level Data (src/config/level.ts)
 - Raw 2D array tilemap built via Phaser's `data` config path (`Parse2DArray`), NOT the Tiled-JSON loader — different index convention than Tiled files: **-1 = empty, 0 = solid** (0 indexes the tileset's first frame directly). If real Tiled-exported JSON is loaded later, switch to `tilemap.json` loading + `map.createLayer` from cache, where 0 means empty instead — don't mix the two conventions.

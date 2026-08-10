@@ -4,6 +4,7 @@ import { BootScene } from "./scenes/BootScene";
 import { PreloadScene } from "./scenes/PreloadScene";
 import { GameScene } from "./scenes/GameScene";
 import { GameOverScene } from "./scenes/GameOverScene";
+import { PauseScene } from "./scenes/PauseScene";
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -22,5 +23,5 @@ new Phaser.Game({
       debug: false,
     },
   },
-  scene: [BootScene, PreloadScene, GameScene, GameOverScene],
+  scene: [BootScene, PreloadScene, GameScene, GameOverScene, PauseScene],
 });
