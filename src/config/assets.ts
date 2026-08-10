@@ -22,6 +22,11 @@ import playerJump9 from "../assets/sprites/player/jump_9.png";
 import playerJump10 from "../assets/sprites/player/jump_10.png";
 import playerFall3 from "../assets/sprites/player/fall_3.png";
 import playerFall4 from "../assets/sprites/player/fall_4.png";
+import playerHurt1 from "../assets/sprites/player/hurt_1.png";
+import playerHurt2 from "../assets/sprites/player/hurt_2.png";
+import playerHurt3 from "../assets/sprites/player/hurt_3.png";
+import playerHurt4 from "../assets/sprites/player/hurt_4.png";
+import playerHurt5 from "../assets/sprites/player/hurt_5.png";
 
 // Maps a texture key -> the Vite-resolved URL to load it from. Add new
 // entries here (and to the relevant ANIMATIONS block below) as more frames
@@ -51,6 +56,11 @@ export const PLAYER_SPRITE_SOURCES: Record<string, string> = {
   "player-jump-10": playerJump10,
   "player-fall-1": playerFall3,
   "player-fall-2": playerFall4,
+  "player-hurt-1": playerHurt1,
+  "player-hurt-2": playerHurt2,
+  "player-hurt-3": playerHurt3,
+  "player-hurt-4": playerHurt4,
+  "player-hurt-5": playerHurt5,
 };
 
 export const PLAYER_ANIMATIONS = {
@@ -106,5 +116,20 @@ export const PLAYER_ANIMATIONS = {
     frameKeys: ["player-fall-1", "player-fall-2"],
     frameRate: 10,
     repeat: -1,
+  },
+  hurt: {
+    key: "player-hurt",
+    // Plays once on taking damage (restarted directly from Player.takeDamage,
+    // not from the per-tick update() switch), holds its last frame if the
+    // knockback is still airborne when it finishes.
+    frameKeys: [
+      "player-hurt-1",
+      "player-hurt-2",
+      "player-hurt-3",
+      "player-hurt-4",
+      "player-hurt-5",
+    ],
+    frameRate: 12,
+    repeat: 0,
   },
 } as const;

@@ -16,6 +16,7 @@ export class Player extends Phaser.GameObjects.Sprite {
   private jumpBufferTimer = 0;
   private jumpsUsed = 0;
   private flashElapsedMs = 0;
+  private hurtAnimTimer = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, PLAYER_ANIMATIONS.idle.frameKeys[0]);
@@ -50,6 +51,8 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.jumpBufferTimer = input.jumpJustPressed
       ? PHYSICS.jumpBufferMs
       : Math.max(0, this.jumpBufferTimer - delta);
+
+    this.hurtAnimTimer = Math.max(0, this.hurtAnimTimer - delta);
 
     if (input.left) {
       this.body.setAccelerationX(-PHYSICS.acceleration);
@@ -90,11 +93,18 @@ export class Player extends Phaser.GameObjects.Sprite {
     const applied = this.health.damage(amount, PLAYER.invulnerabilityMs);
     if (applied) {
       this.body.setVelocity(knockbackDirX * PLAYER.knockbackX, -PLAYER.knockbackY);
+      this.hurtAnimTimer = PLAYER.hurtAnimMs;
+      this.anims.play(PLAYER_ANIMATIONS.hurt.key);
     }
     return applied;
   }
 
   private updateAnimation(grounded: boolean, input: InputHandler, justJumped: boolean): void {
+    if (this.hurtAnimTimer > 0) {
+      // takeDamage() already forced the restart; just keep it playing/held here.
+      this.anims.play(PLAYER_ANIMATIONS.hurt.key, true);
+      return;
+    }
     if (justJumped) {
       // Force a restart (no ignoreIfPlaying) so a 2nd jump mid-air replays from frame 1.
       this.anims.play(PLAYER_ANIMATIONS.jump.key);

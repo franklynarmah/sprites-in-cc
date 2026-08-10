@@ -23,6 +23,10 @@ export const PLAYER = {
   knockbackX: 220,
   knockbackY: 260,
   stompBounceVelocity: 400,
+  // How long the hurt animation holds priority over jump/fall/run/idle after
+  // a hit lands. Matches the hurt clip's own length (5 frames @ 12fps) so it
+  // finishes its pose right as this expires, not shorter or longer.
+  hurtAnimMs: 420,
   // Hitbox stays fixed regardless of sprite art; the idle/run/jump/fall/hurt
   // frames are drawn on a padded 48x64 canvas (see ASSET_SPEC.md) and
   // centered over this box so the physics body never has to change.
