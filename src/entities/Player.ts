@@ -61,6 +61,8 @@ export class Player extends Phaser.GameObjects.Sprite {
       this.body.setAccelerationX(0);
     }
 
+    this.updateAnimation(grounded, input);
+
     const canJump =
       this.jumpsUsed === 0 ? this.coyoteTimer > 0 : this.jumpsUsed < PHYSICS.maxJumps;
 
@@ -88,6 +90,13 @@ export class Player extends Phaser.GameObjects.Sprite {
       this.body.setVelocity(knockbackDirX * PLAYER.knockbackX, -PLAYER.knockbackY);
     }
     return applied;
+  }
+
+  // Airborne states fall back to idle until jump/fall frames exist.
+  private updateAnimation(grounded: boolean, input: InputHandler): void {
+    const running = grounded && (input.left || input.right);
+    const key = running ? PLAYER_ANIMATIONS.run.key : PLAYER_ANIMATIONS.idle.key;
+    this.anims.play(key, true);
   }
 
   private updateInvulnerabilityFlash(delta: number): void {

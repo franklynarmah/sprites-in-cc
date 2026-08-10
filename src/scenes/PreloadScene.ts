@@ -20,13 +20,14 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createPlayerAnimations(): void {
-    const idle = PLAYER_ANIMATIONS.idle;
-    this.anims.create({
-      key: idle.key,
-      frames: idle.frameKeys.map((key) => ({ key })),
-      frameRate: idle.frameRate,
-      repeat: idle.repeat,
-    });
+    for (const anim of Object.values(PLAYER_ANIMATIONS)) {
+      this.anims.create({
+        key: anim.key,
+        frames: anim.frameKeys.map((key) => ({ key })),
+        frameRate: anim.frameRate,
+        repeat: anim.repeat,
+      });
+    }
   }
 
   private generatePlaceholderTileTexture(): void {
