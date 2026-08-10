@@ -1,12 +1,13 @@
 import Phaser from "phaser";
 import { PHYSICS, PLAYER } from "../config/constants";
+import { PLAYER_ANIMATIONS } from "../config/assets";
 import { InputHandler } from "../systems/InputHandler";
 import { Health } from "../systems/Health";
 
 const MAX_FALL_SPEED = 1000;
 const FLASH_INTERVAL_MS = 80;
 
-export class Player extends Phaser.GameObjects.Rectangle {
+export class Player extends Phaser.GameObjects.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
 
   readonly health = new Health(PLAYER.maxHp);
@@ -17,13 +18,22 @@ export class Player extends Phaser.GameObjects.Rectangle {
   private flashElapsedMs = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 32, 48, 0x4ade80);
+    super(scene, x, y, PLAYER_ANIMATIONS.idle.frameKeys[0]);
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    // The sprite frame is a padded canvas (see ASSET_SPEC.md); center the
+    // fixed gameplay hitbox within it so physics never depends on art size.
+    this.body.setSize(PLAYER.hitboxWidth, PLAYER.hitboxHeight);
+    this.body.setOffset(
+      (this.width - PLAYER.hitboxWidth) / 2,
+      (this.height - PLAYER.hitboxHeight) / 2,
+    );
     this.body.setCollideWorldBounds(true);
     this.body.setMaxVelocity(PHYSICS.moveSpeed, MAX_FALL_SPEED);
     this.body.setDragX(PHYSICS.drag);
+
+    this.play(PLAYER_ANIMATIONS.idle.key);
   }
 
   update(delta: number, input: InputHandler): void {
@@ -43,8 +53,10 @@ export class Player extends Phaser.GameObjects.Rectangle {
 
     if (input.left) {
       this.body.setAccelerationX(-PHYSICS.acceleration);
+      this.setFlipX(true);
     } else if (input.right) {
       this.body.setAccelerationX(PHYSICS.acceleration);
+      this.setFlipX(false);
     } else {
       this.body.setAccelerationX(0);
     }

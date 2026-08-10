@@ -23,6 +23,11 @@ export const PLAYER = {
   knockbackX: 220,
   knockbackY: 260,
   stompBounceVelocity: 400,
+  // Hitbox stays fixed regardless of sprite art; the idle/run/jump/fall/hurt
+  // frames are drawn on a padded 48x64 canvas (see ASSET_SPEC.md) and
+  // centered over this box so the physics body never has to change.
+  hitboxWidth: 32,
+  hitboxHeight: 48,
 };
 
 export const ENEMY = {

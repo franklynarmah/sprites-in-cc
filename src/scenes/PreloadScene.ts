@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { TILE_SIZE } from "../config/constants";
+import { PLAYER_ANIMATIONS, PLAYER_SPRITE_SOURCES } from "../config/assets";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -7,12 +8,25 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Real Gemini-generated sprites get loaded here later (see plan Section 6).
+    for (const [key, url] of Object.entries(PLAYER_SPRITE_SOURCES)) {
+      this.load.image(key, url);
+    }
   }
 
   create(): void {
     this.generatePlaceholderTileTexture();
+    this.createPlayerAnimations();
     this.scene.start("MainMenu");
+  }
+
+  private createPlayerAnimations(): void {
+    const idle = PLAYER_ANIMATIONS.idle;
+    this.anims.create({
+      key: idle.key,
+      frames: idle.frameKeys.map((key) => ({ key })),
+      frameRate: idle.frameRate,
+      repeat: idle.repeat,
+    });
   }
 
   private generatePlaceholderTileTexture(): void {
