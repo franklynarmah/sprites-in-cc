@@ -7,7 +7,7 @@
 ## Folder Structure
 ```
 /src
-  /scenes       BootScene, PreloadScene, GameScene, GameOverScene, PauseScene, ... one class per file
+  /scenes       BootScene, PreloadScene, MainMenuScene, GameScene, GameOverScene, PauseScene, ... one class per file
   /entities     Player, Enemy, Checkpoint, Goal, Collectible — classes extending Phaser.GameObjects
   /systems      InputHandler, CameraController, SaveState, shared helpers
   /config       constants.ts — all tunable numbers live here, nowhere else
@@ -46,7 +46,8 @@ main.ts         Game instance + scene list only, no gameplay logic
 ## UI: HUD & Pause (src/systems/HUD.ts, src/scenes/PauseScene.ts)
 - `HUD` is a plain composed class (like `Health`) owned by `GameScene`, not a scene of its own — it draws one placeholder heart Rectangle per max-HP point (`UI.heartFilledColor`/`heartEmptyColor`), scroll-factor 0. `setHealth(current)` just recolors existing hearts; real heart-icon sprites swap in at step 9 without touching the calling code.
 - The debug FPS text is now separate from the real HUD (it used to double as the HP readout) — it sits just below the hearts and stays a debug/dev aid, not player-facing UI.
-- Pause is a **separate scene** (`PauseScene`, key `"Pause"`), the standard Phaser pattern for overlays: `ESC` in `GameScene` calls `this.scene.pause()` (freezes update/physics for Game, but it keeps rendering behind the overlay) + `this.scene.launch("Pause")`. `PauseScene` draws a dim overlay + options and itself calls `this.scene.resume("Game")` / `this.scene.stop()` to unpause, or `this.scene.start("Game")` to restart from the last checkpoint (reuses the exact same checkpoint-or-initial-spawn logic as a normal death retry).
+- Pause is a **separate scene** (`PauseScene`, key `"Pause"`), the standard Phaser pattern for overlays: `ESC` in `GameScene` calls `this.scene.pause()` (freezes update/physics for Game, but it keeps rendering behind the overlay) + `this.scene.launch("Pause")`. `PauseScene` draws a dim overlay + options and itself calls `this.scene.resume("Game")` / `this.scene.stop()` to unpause, `this.scene.start("Game")` to restart from the last checkpoint (reuses the exact same checkpoint-or-initial-spawn logic as a normal death retry), or `SaveState.reset()` + `this.scene.stop("Game")` + `this.scene.start("MainMenu")` to quit to the main menu.
+- `MainMenuScene` (key `"MainMenu"`) is the boot target now — `PreloadScene.create()` starts `"MainMenu"`, not `"Game"` directly. Bare-bones: title text + "Press SPACE to start" → `this.scene.start("Game")`.
 - Guard against double-pausing with `this.scene.isPaused()` (a live Phaser check), not a manually-tracked boolean field — avoids the class-field-reset trap described below since it's never stale across restarts.
 - `UI` constants (`config/constants.ts`): hud margin, heart size/spacing/colors, pause overlay color/alpha.
 

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, UI } from "../config/constants";
+import { SaveState } from "../systems/SaveState";
 
 export class PauseScene extends Phaser.Scene {
   constructor() {
@@ -36,6 +37,14 @@ export class PauseScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 58, "M: Quit to main menu", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#cccccc",
+      })
+      .setOrigin(0.5);
+
     const resume = () => {
       this.scene.stop();
       this.scene.resume("Game");
@@ -46,6 +55,13 @@ export class PauseScene extends Phaser.Scene {
     this.input.keyboard!.once("keydown-R", () => {
       this.scene.stop();
       this.scene.start("Game");
+    });
+
+    this.input.keyboard!.once("keydown-M", () => {
+      SaveState.reset();
+      this.scene.stop();
+      this.scene.stop("Game");
+      this.scene.start("MainMenu");
     });
   }
 }

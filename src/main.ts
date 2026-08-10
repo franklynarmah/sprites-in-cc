@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PHYSICS } from "./config/constants";
 import { BootScene } from "./scenes/BootScene";
 import { PreloadScene } from "./scenes/PreloadScene";
+import { MainMenuScene } from "./scenes/MainMenuScene";
 import { GameScene } from "./scenes/GameScene";
 import { GameOverScene } from "./scenes/GameOverScene";
 import { PauseScene } from "./scenes/PauseScene";
@@ -23,5 +24,5 @@ new Phaser.Game({
       debug: false,
     },
   },
-  scene: [BootScene, PreloadScene, GameScene, GameOverScene, PauseScene],
+  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GameOverScene, PauseScene],
 });

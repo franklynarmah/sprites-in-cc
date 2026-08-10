@@ -12,7 +12,7 @@ export class PreloadScene extends Phaser.Scene {
 
   create(): void {
     this.generatePlaceholderTileTexture();
-    this.scene.start("Game");
+    this.scene.start("MainMenu");
   }
 
   private generatePlaceholderTileTexture(): void {
