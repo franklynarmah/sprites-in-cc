@@ -39,6 +39,12 @@ export const ENEMY = {
   chaseVerticalToleranceTiles: 1.5,
 };
 
+export const COLLECTIBLE = {
+  size: 14,
+  value: 10,
+  color: 0xffd700,
+};
+
 export const UI = {
   hudMargin: 10,
   heartSize: 16,

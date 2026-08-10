@@ -1,10 +1,11 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, PLAYER, TILE_SIZE, UI } from "../config/constants";
+import { COLLECTIBLE, GAME_HEIGHT, PLAYER, TILE_SIZE, UI } from "../config/constants";
 import { GROUND_ROW_TOP, LEVEL_DATA, PIT_DEATH_Y } from "../config/level";
 import { Player } from "../entities/Player";
 import { Enemy } from "../entities/Enemy";
 import { Checkpoint } from "../entities/Checkpoint";
 import { Goal } from "../entities/Goal";
+import { Collectible } from "../entities/Collectible";
 import { InputHandler } from "../systems/InputHandler";
 import { SaveState } from "../systems/SaveState";
 import { HUD } from "../systems/HUD";
@@ -14,6 +15,17 @@ const INITIAL_SPAWN = { x: TILE_SIZE * 2, y: GAME_HEIGHT - TILE_SIZE * 3 };
 const CHECKPOINT_COLS = [22, 50];
 const GOAL_COL = 57;
 
+// Spread across ground, the pit gap, and every floating platform so
+// collecting all of them means exploring the whole level.
+const COLLECTIBLE_SPAWNS = [
+  { x: TILE_SIZE * 8, y: GROUND_SURFACE_Y - 3 * TILE_SIZE - 14 },
+  { x: TILE_SIZE * 13, y: GROUND_SURFACE_Y - 5 * TILE_SIZE - 14 },
+  { x: TILE_SIZE * 19, y: GROUND_SURFACE_Y - 40 },
+  { x: TILE_SIZE * 26, y: GROUND_SURFACE_Y - 3 * TILE_SIZE - 14 },
+  { x: TILE_SIZE * 35, y: GROUND_SURFACE_Y - 6 * TILE_SIZE - 14 },
+  { x: TILE_SIZE * 55, y: GROUND_SURFACE_Y - 20 },
+];
+
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private inputHandler!: InputHandler;
@@ -22,6 +34,8 @@ export class GameScene extends Phaser.Scene {
   private groundLayer!: Phaser.Tilemaps.TilemapLayer;
   private enemies: Enemy[] = [];
   private checkpoints: Checkpoint[] = [];
+  private collectibles: Collectible[] = [];
+  private score = 0;
   private gameEnding = false;
   private debugOn = false;
   private tileDebugGraphic?: Phaser.GameObjects.Graphics;
@@ -37,6 +51,8 @@ export class GameScene extends Phaser.Scene {
     this.gameEnding = false;
     this.enemies = [];
     this.checkpoints = [];
+    this.collectibles = [];
+    this.score = 0;
     this.debugOn = false;
     this.tileDebugGraphic = undefined;
 
@@ -65,6 +81,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnEnemies();
     this.spawnCheckpoints();
     this.spawnGoal();
+    this.spawnCollectibles();
 
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -74,6 +91,7 @@ export class GameScene extends Phaser.Scene {
 
     this.hud = new HUD(this, UI.hudMargin, UI.hudMargin, this.player.health.max);
     this.hud.setHealth(this.player.health.current);
+    this.hud.setScore(this.score);
 
     this.fpsText = this.add
       .text(UI.hudMargin, UI.hudMargin + UI.heartSize + 6, "", {
@@ -116,6 +134,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.hud.setHealth(this.player.health.current);
+    this.hud.setScore(this.score);
     this.fpsText.setText(
       `FPS: ${Math.round(this.game.loop.actualFps)}  (P: hitboxes, ESC: pause)`,
     );
@@ -168,6 +187,30 @@ export class GameScene extends Phaser.Scene {
     const x = GOAL_COL * TILE_SIZE;
     const goal = new Goal(this, x, GROUND_SURFACE_Y - 28);
     this.physics.add.overlap(this.player, goal, () => this.endGame("win"));
+  }
+
+  private spawnCollectibles(): void {
+    for (const point of COLLECTIBLE_SPAWNS) {
+      const collectible = new Collectible(
+        this,
+        point.x,
+        point.y,
+        COLLECTIBLE.size,
+        COLLECTIBLE.color,
+      );
+      this.physics.add.overlap(this.player, collectible, () =>
+        this.handleCollectiblePickup(collectible),
+      );
+      this.collectibles.push(collectible);
+    }
+  }
+
+  private handleCollectiblePickup(collectible: Collectible): void {
+    if (collectible.isCollected) {
+      return;
+    }
+    collectible.collect();
+    this.score += COLLECTIBLE.value;
   }
 
   private respawnFromPit(): void {

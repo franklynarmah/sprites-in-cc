@@ -8,7 +8,7 @@
 ```
 /src
   /scenes       BootScene, PreloadScene, MainMenuScene, GameScene, GameOverScene, PauseScene, ... one class per file
-  /entities     Player, Enemy, Checkpoint, Goal, Collectible — classes extending Phaser.GameObjects
+  /entities     Player, Enemy, Checkpoint, Goal, Collectible — classes extending Phaser.GameObjects (all now implemented)
   /systems      InputHandler, CameraController, SaveState, shared helpers
   /config       constants.ts — all tunable numbers live here, nowhere else
   /assets
@@ -50,6 +50,12 @@ main.ts         Game instance + scene list only, no gameplay logic
 - `MainMenuScene` (key `"MainMenu"`) is the boot target now — `PreloadScene.create()` starts `"MainMenu"`, not `"Game"` directly. Bare-bones: title text + "Press SPACE to start" → `this.scene.start("Game")`.
 - Guard against double-pausing with `this.scene.isPaused()` (a live Phaser check), not a manually-tracked boolean field — avoids the class-field-reset trap described below since it's never stale across restarts.
 - `UI` constants (`config/constants.ts`): hud margin, heart size/spacing/colors, pause overlay color/alpha.
+
+## Collectibles & Scoring (src/entities/Collectible.ts)
+- `Collectible` is an overlap-only static Rectangle placeholder (a 45°-rotated square, `COLLECTIBLE.color`/`size`), same construction pattern as `Checkpoint`/`Goal`. `collect()` is idempotent (guarded by an internal `collected` flag) and plays a placeholder pickup tween (scale up + fade, 150ms) before destroying itself — the sound hook comes at step 10, not implemented yet.
+- `GameScene` spawns a fixed list of `COLLECTIBLE_SPAWNS` (one per floating platform, one over the pit gap, one near the goal) and tracks `score` as a plain field, reset to 0 in `create()` like every other per-run field (see the Phaser scene-reuse gotcha above — this one bit us with `enemies`/`checkpoints` already, so new mutable fields always go in that reset block). `handleCollectiblePickup` double-checks `isCollected` before adding `COLLECTIBLE.value` to score, so an overlap firing again during the pickup tween can't double-count.
+- Score is per-attempt, not persisted in `SaveState` — a full scene restart (death retry, pause-restart, win-retry) resets it to 0 along with respawning every collectible. Only a pit-fall respawn (no scene restart) leaves already-collected items gone, consistent with how enemies behave.
+- HUD shows score via `HUD.setScore(score)`, next to the hearts.
 
 ## Level Data (src/config/level.ts)
 - Raw 2D array tilemap built via Phaser's `data` config path (`Parse2DArray`), NOT the Tiled-JSON loader — different index convention than Tiled files: **-1 = empty, 0 = solid** (0 indexes the tileset's first frame directly). If real Tiled-exported JSON is loaded later, switch to `tilemap.json` loading + `map.createLayer` from cache, where 0 means empty instead — don't mix the two conventions.
