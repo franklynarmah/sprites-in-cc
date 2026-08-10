@@ -61,17 +61,19 @@ export class Player extends Phaser.GameObjects.Sprite {
       this.body.setAccelerationX(0);
     }
 
-    this.updateAnimation(grounded, input);
-
     const canJump =
       this.jumpsUsed === 0 ? this.coyoteTimer > 0 : this.jumpsUsed < PHYSICS.maxJumps;
 
+    let justJumped = false;
     if (this.jumpBufferTimer > 0 && canJump) {
       this.body.setVelocityY(-PHYSICS.jumpVelocity);
       this.jumpsUsed += 1;
       this.jumpBufferTimer = 0;
       this.coyoteTimer = 0;
+      justJumped = true;
     }
+
+    this.updateAnimation(grounded, input, justJumped);
 
     this.body.setGravityY(
       this.body.velocity.y > 0
@@ -92,9 +94,17 @@ export class Player extends Phaser.GameObjects.Sprite {
     return applied;
   }
 
-  // Airborne states fall back to idle until jump/fall frames exist.
-  private updateAnimation(grounded: boolean, input: InputHandler): void {
-    const running = grounded && (input.left || input.right);
+  private updateAnimation(grounded: boolean, input: InputHandler, justJumped: boolean): void {
+    if (justJumped) {
+      // Force a restart (no ignoreIfPlaying) so a 2nd jump mid-air replays from frame 1.
+      this.anims.play(PLAYER_ANIMATIONS.jump.key);
+      return;
+    }
+    if (!grounded) {
+      this.anims.play(PLAYER_ANIMATIONS.jump.key, true);
+      return;
+    }
+    const running = input.left || input.right;
     const key = running ? PLAYER_ANIMATIONS.run.key : PLAYER_ANIMATIONS.idle.key;
     this.anims.play(key, true);
   }
