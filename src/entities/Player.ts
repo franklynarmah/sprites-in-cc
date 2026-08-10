@@ -101,7 +101,8 @@ export class Player extends Phaser.GameObjects.Sprite {
       return;
     }
     if (!grounded) {
-      this.anims.play(PLAYER_ANIMATIONS.jump.key, true);
+      const key = this.body.velocity.y > 0 ? PLAYER_ANIMATIONS.fall.key : PLAYER_ANIMATIONS.jump.key;
+      this.anims.play(key, true);
       return;
     }
     const running = input.left || input.right;

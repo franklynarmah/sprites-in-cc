@@ -20,6 +20,8 @@ import playerJump7 from "../assets/sprites/player/jump_7.png";
 import playerJump8 from "../assets/sprites/player/jump_8.png";
 import playerJump9 from "../assets/sprites/player/jump_9.png";
 import playerJump10 from "../assets/sprites/player/jump_10.png";
+import playerFall3 from "../assets/sprites/player/fall_3.png";
+import playerFall4 from "../assets/sprites/player/fall_4.png";
 
 // Maps a texture key -> the Vite-resolved URL to load it from. Add new
 // entries here (and to the relevant ANIMATIONS block below) as more frames
@@ -47,6 +49,8 @@ export const PLAYER_SPRITE_SOURCES: Record<string, string> = {
   "player-jump-8": playerJump8,
   "player-jump-9": playerJump9,
   "player-jump-10": playerJump10,
+  "player-fall-1": playerFall3,
+  "player-fall-2": playerFall4,
 };
 
 export const PLAYER_ANIMATIONS = {
@@ -78,9 +82,10 @@ export const PLAYER_ANIMATIONS = {
   },
   jump: {
     key: "player-jump",
-    // Covers the whole airborne arc (rise -> peak -> fall), not just the
-    // takeoff — plays once and holds its last frame if still airborne when
-    // it finishes, restarts on every fresh jump (including the 2nd jump).
+    // Plays on takeoff (restarts on every fresh jump, including the 2nd
+    // jump) and keeps advancing while ascending. Once velocity.y turns
+    // positive (falling), Player switches straight to `fall` — this rarely
+    // reaches its own last frame, that's expected.
     frameKeys: [
       "player-jump-1",
       "player-jump-2",
@@ -95,5 +100,11 @@ export const PLAYER_ANIMATIONS = {
     ],
     frameRate: 15,
     repeat: 0,
+  },
+  fall: {
+    key: "player-fall",
+    frameKeys: ["player-fall-1", "player-fall-2"],
+    frameRate: 10,
+    repeat: -1,
   },
 } as const;
