@@ -33,6 +33,11 @@ import enemyIdle2 from "../assets/sprites/enemy/idle_2.png";
 import enemyIdle3 from "../assets/sprites/enemy/idle_3.png";
 import enemyIdle4 from "../assets/sprites/enemy/idle_4.png";
 import enemyIdle5 from "../assets/sprites/enemy/idle_5.png";
+import enemyWalk1 from "../assets/sprites/enemy/walk_1.png";
+import enemyWalk2 from "../assets/sprites/enemy/walk_2.png";
+import enemyWalk3 from "../assets/sprites/enemy/walk_3.png";
+import enemyWalk4 from "../assets/sprites/enemy/walk_4.png";
+import enemyWalk5 from "../assets/sprites/enemy/walk_5.png";
 
 // Maps a texture key -> the Vite-resolved URL to load it from. Add new
 // entries here (and to the relevant ANIMATIONS block below) as more frames
@@ -76,6 +81,11 @@ export const ENEMY_SPRITE_SOURCES: Record<string, string> = {
   "enemy-idle-3": enemyIdle3,
   "enemy-idle-4": enemyIdle4,
   "enemy-idle-5": enemyIdle5,
+  "enemy-walk-1": enemyWalk1,
+  "enemy-walk-2": enemyWalk2,
+  "enemy-walk-3": enemyWalk3,
+  "enemy-walk-4": enemyWalk4,
+  "enemy-walk-5": enemyWalk5,
 };
 
 export const PLAYER_ANIMATIONS = {
@@ -161,6 +171,18 @@ export const ENEMY_ANIMATIONS = {
       "enemy-idle-5",
     ],
     frameRate: 8,
+    repeat: -1,
+  },
+  walk: {
+    key: "enemy-walk",
+    frameKeys: [
+      "enemy-walk-1",
+      "enemy-walk-2",
+      "enemy-walk-3",
+      "enemy-walk-4",
+      "enemy-walk-5",
+    ],
+    frameRate: 10,
     repeat: -1,
   },
 } as const;

@@ -37,6 +37,7 @@ export class Enemy extends Phaser.GameObjects.Sprite {
   update(delta: number, player: Player): void {
     if (this.aiState === "idle") {
       this.idleTimer -= delta;
+      this.updateMovementAnimation();
       if (this.idleTimer <= 0) {
         this.aiState = "patrol";
       }
@@ -82,14 +83,23 @@ export class Enemy extends Phaser.GameObjects.Sprite {
         this.aiState = "idle";
         this.idleTimer = ENEMY.patrolPauseMs;
         this.body.setVelocityX(0);
+        this.updateMovementAnimation();
         return;
       }
       this.body.setVelocityX(ENEMY.patrolSpeed * this.direction);
     }
+    this.updateMovementAnimation();
   }
 
   private updateFacingDirection(): void {
     this.setFlipX(this.direction < 0);
+  }
+
+  private updateMovementAnimation(): void {
+    const animation = this.body.velocity.x === 0
+      ? ENEMY_ANIMATIONS.idle
+      : ENEMY_ANIMATIONS.walk;
+    this.anims.play(animation.key, true);
   }
 
   /** Called when the player stomps this enemy from above. */
