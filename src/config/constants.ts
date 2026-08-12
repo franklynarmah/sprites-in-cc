@@ -39,6 +39,10 @@ export const ENEMY = {
   height: 28,
   patrolSpeed: 60,
   idleMs: 400,
+  // Pause at each patrol turnaround (wall/ledge/leash bound) before heading
+  // back the other way, so patrol reads as "walk, stop, look around, walk
+  // back" instead of nonstop pacing. Chase ignores this (it just halts).
+  patrolPauseMs: 1000,
   hurtMs: 220,
   // Total width of the patrol leash, centered on the enemy's spawn point (in tiles).
   patrolRangeTiles: 4,

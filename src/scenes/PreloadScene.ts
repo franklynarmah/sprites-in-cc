@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { TILE_SIZE } from "../config/constants";
-import { PLAYER_ANIMATIONS, PLAYER_SPRITE_SOURCES } from "../config/assets";
+import {
+  ENEMY_ANIMATIONS,
+  ENEMY_SPRITE_SOURCES,
+  PLAYER_ANIMATIONS,
+  PLAYER_SPRITE_SOURCES,
+} from "../config/assets";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -11,16 +16,31 @@ export class PreloadScene extends Phaser.Scene {
     for (const [key, url] of Object.entries(PLAYER_SPRITE_SOURCES)) {
       this.load.image(key, url);
     }
+    for (const [key, url] of Object.entries(ENEMY_SPRITE_SOURCES)) {
+      this.load.image(key, url);
+    }
   }
 
   create(): void {
     this.generatePlaceholderTileTexture();
     this.createPlayerAnimations();
+    this.createEnemyAnimations();
     this.scene.start("MainMenu");
   }
 
   private createPlayerAnimations(): void {
     for (const anim of Object.values(PLAYER_ANIMATIONS)) {
+      this.anims.create({
+        key: anim.key,
+        frames: anim.frameKeys.map((key) => ({ key })),
+        frameRate: anim.frameRate,
+        repeat: anim.repeat,
+      });
+    }
+  }
+
+  private createEnemyAnimations(): void {
+    for (const anim of Object.values(ENEMY_ANIMATIONS)) {
       this.anims.create({
         key: anim.key,
         frames: anim.frameKeys.map((key) => ({ key })),

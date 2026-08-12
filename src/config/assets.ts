@@ -27,6 +27,12 @@ import playerHurt2 from "../assets/sprites/player/hurt_2.png";
 import playerHurt3 from "../assets/sprites/player/hurt_3.png";
 import playerHurt4 from "../assets/sprites/player/hurt_4.png";
 import playerHurt5 from "../assets/sprites/player/hurt_5.png";
+import enemyIdle0 from "../assets/sprites/enemy/idle_0.png";
+import enemyIdle1 from "../assets/sprites/enemy/idle_1.png";
+import enemyIdle2 from "../assets/sprites/enemy/idle_2.png";
+import enemyIdle3 from "../assets/sprites/enemy/idle_3.png";
+import enemyIdle4 from "../assets/sprites/enemy/idle_4.png";
+import enemyIdle5 from "../assets/sprites/enemy/idle_5.png";
 
 // Maps a texture key -> the Vite-resolved URL to load it from. Add new
 // entries here (and to the relevant ANIMATIONS block below) as more frames
@@ -61,6 +67,15 @@ export const PLAYER_SPRITE_SOURCES: Record<string, string> = {
   "player-hurt-3": playerHurt3,
   "player-hurt-4": playerHurt4,
   "player-hurt-5": playerHurt5,
+};
+
+export const ENEMY_SPRITE_SOURCES: Record<string, string> = {
+  "enemy-idle-0": enemyIdle0,
+  "enemy-idle-1": enemyIdle1,
+  "enemy-idle-2": enemyIdle2,
+  "enemy-idle-3": enemyIdle3,
+  "enemy-idle-4": enemyIdle4,
+  "enemy-idle-5": enemyIdle5,
 };
 
 export const PLAYER_ANIMATIONS = {
@@ -131,5 +146,21 @@ export const PLAYER_ANIMATIONS = {
     ],
     frameRate: 12,
     repeat: 0,
+  },
+} as const;
+
+export const ENEMY_ANIMATIONS = {
+  idle: {
+    key: "enemy-idle",
+    frameKeys: [
+      "enemy-idle-0",
+      "enemy-idle-1",
+      "enemy-idle-2",
+      "enemy-idle-3",
+      "enemy-idle-4",
+      "enemy-idle-5",
+    ],
+    frameRate: 8,
+    repeat: -1,
   },
 } as const;
